@@ -12,6 +12,8 @@ GUILD_EMOJIS_ROLES = {
     "Notorious": {"emoji": "<:notorious:1307418766266728500>", "role_id": 1300093554064097406},
     "Percophile": {"emoji": "<:percophile:1307418769764651228>", "role_id": 1300093554080612362},
     "Tilisquad": {"emoji": "<:tilisquad:1307418771882905600>", "role_id": 1300093554080612367},
+    "Crescent": {"emoji": "<:Crescent:1328374098262495232>", "role_id": 1300093554064097404},
+    "DieHard": {"emoji": "<:DieHard:1328374141237329972>", "role_id": 1300093554064097405},
 }
 
 # French alert messages
