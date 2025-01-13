@@ -38,6 +38,21 @@ ROLE_DATA = {
         "role_id": 1300093554080612367,
         "role_name": "Tilisquad",
     },
+    "Crescent": {
+        "emoji": "<:Crescent:1328374098262495232>",
+        "role_id": 1300093554064097404,
+        "role_name": "Crescent",
+    },
+    "DieHard": {
+        "emoji": "<:DieHard:1328374141237329972>",
+        "role_id": 1300093554064097405,
+        "role_name": "DieHard",
+    },
+    "Deviance": {
+        "emoji": "<:Deviance:1328387647386947664>",
+        "role_id": 1300093554064097408,
+        "role_name": "Deviance",
+    },
 }
 
 class RoleSelectionView(discord.ui.View):
