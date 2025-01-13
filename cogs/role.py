@@ -55,6 +55,9 @@ ROLE_DATA = {
     },
 }
 
+DEF_ROLE_ID = 1300093554064097401  # Default DEF role ID
+
+
 class RoleSelectionView(discord.ui.View):
     def __init__(self, bot, member):
         super().__init__(timeout=None)
@@ -62,7 +65,16 @@ class RoleSelectionView(discord.ui.View):
         self.member = member
 
         for role_name, role_info in ROLE_DATA.items():
-            self.add_item(RoleButton(bot, member, role_name, role_info["emoji"], role_info["role_name"], role_info["role_id"]))
+            self.add_item(
+                RoleButton(
+                    bot,
+                    member,
+                    role_name,
+                    role_info["emoji"],
+                    role_info["role_name"],
+                    role_info["role_id"],
+                )
+            )
 
 
 class RoleButton(discord.ui.Button):
@@ -74,39 +86,71 @@ class RoleButton(discord.ui.Button):
         self.role_id = role_id
 
     async def callback(self, interaction: discord.Interaction):
-        guild = interaction.guild
-        member = self.member
-        if not guild:
-            await interaction.response.send_message("An error occurred. Try again.", ephemeral=True)
+        server = interaction.guild or self.member.guild
+        user = self.member
+
+        if not server:
+            await interaction.response.send_message(
+                "An error occurred. Please try again.", ephemeral=True
+            )
             return
 
-        role = guild.get_role(self.role_id)
+        role = server.get_role(self.role_id)
         if not role:
-            await interaction.response.send_message("The role is unavailable.", ephemeral=True)
+            role = await server.create_role(
+                name=self.role_display_name,
+                reason="Auto-created role via selection panel."
+            )
+
+        def_role = server.get_role(DEF_ROLE_ID)
+        if not def_role:
+            await interaction.response.send_message(
+                "The DEF role does not exist on the server. Please contact an admin.",
+                ephemeral=True,
+            )
             return
 
-        def_role = guild.get_role(1300093554064097401)  # DEF Role ID
         try:
-            await member.add_roles(role, def_role)
-            await interaction.response.send_message(f"You have been assigned **{self.role_display_name}** and **DEF** roles.", ephemeral=True)
+            await user.add_roles(role, def_role, reason="Roles assigned via selection panel.")
+            await interaction.response.send_message(
+                f"You've been assigned the **{self.role_display_name}** and **DEF** roles successfully!",
+                ephemeral=True,
+            )
 
-            # Prompt for in-game name
-            await member.send("Please enter your in-game name:")
-            def check(msg):
-                return msg.author == member and isinstance(msg.channel, discord.DMChannel)
+            await self.ask_for_ign(user, self.role_display_name)
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                "I don't have permission to assign roles.", ephemeral=True
+            )
+
+    async def ask_for_ign(self, user: discord.Member, guild_name: str):
+        try:
+            await user.send("Please enter your in-game name:")
+
+            def check(message: discord.Message):
+                return (
+                    message.author == user
+                    and isinstance(message.channel, discord.DMChannel)
+                )
 
             response = await self.bot.wait_for("message", check=check, timeout=300)
-            ign = response.content
+            new_nickname = f"[{guild_name}] {response.content}"
 
-            # Update nickname
-            nickname = f"[{self.role_display_name}] {ign}"
-            await member.edit(nick=nickname)
-            await member.send(f"Your nickname has been updated to: {nickname}")
-
+            try:
+                await user.edit(nick=new_nickname, reason="Updated nickname to in-game name.")
+                await user.send(
+                    f"Thank you! Your in-game name has been set to **{new_nickname}**."
+                )
+            except discord.Forbidden:
+                await user.send(
+                    "I couldn't change your nickname due to missing permissions. Please inform an admin."
+                )
         except discord.Forbidden:
-            await interaction.response.send_message("I lack the permissions to assign roles or change nicknames.", ephemeral=True)
-        except discord.HTTPException as e:
-            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+            print(f"Unable to DM {user.name}.")
+        except TimeoutError:
+            await user.send(
+                "Timeout! Please try providing your in-game name later."
+            )
 
 
 class RoleCog(commands.Cog):
@@ -114,23 +158,39 @@ class RoleCog(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
 
-        member = message.author
-        guild = message.guild
+        user = message.author
+        server = message.guild
 
-        if len(member.roles) <= 1:  # If the member only has the default role
-            embed = discord.Embed(
-                title="Welcome!",
-                description="Please select your guild by clicking one of the buttons below.",
-                color=discord.Color.blue(),
+        if server is None:
+            return
+
+        if len(user.roles) <= 1:
+            await self.send_welcome_message(user)
+
+    async def send_welcome_message(self, member: discord.Member):
+        embed = discord.Embed(
+            title="Welcome to the Alliance!",
+            description=(
+                "Welcome to the server! Please select your role by clicking a button below. "
+                "Your role determines your place in the alliance. Choose wisely!"
+            ),
+            color=discord.Color.blue(),
+        )
+        embed.set_footer(text="Role selection panel")
+        embed.set_thumbnail(url=member.guild.icon.url if member.guild.icon else None)
+
+        try:
+            await member.send(
+                content="Welcome to the server!",
+                embed=embed,
+                view=RoleSelectionView(self.bot, member),
             )
-            try:
-                await member.send(embed=embed, view=RoleSelectionView(self.bot, member))
-            except discord.Forbidden:
-                pass
+        except discord.Forbidden:
+            print(f"Unable to DM {member.name}. DMs might be disabled.")
 
 
 async def setup(bot):
