@@ -7,42 +7,28 @@ class WelcomeSparta(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        # Server and channel configuration
-        server_channels = {
-            1300093554064097400: 1300093554399645707,  # Sparta server and its public channel
-            1217700740949348443: 1247706162317758597,  # Second server and its public channel
-        }
-
-        # Debug log: Member join event
-        print(f"Member {member.name} joined {member.guild.name} (ID: {member.guild.id}).")
-
-        # Check if the member joined one of the specified servers
-        if member.guild.id in server_channels:
-            public_channel_id = server_channels[member.guild.id]
-            public_channel = member.guild.get_channel(public_channel_id)
-
-            # Debug log: Public channel lookup
-            if public_channel:
-                print(f"Found public channel {public_channel.name} (ID: {public_channel.id}) in server {member.guild.name}.")
-            else:
-                print(f"Public channel with ID {public_channel_id} not found or inaccessible in server {member.guild.name}.")
-                return
-
+        # Check if the member joined the specific server
+        if member.guild.id == 1300093554064097400:  # Target server ID
             try:
                 # Send public welcome message
-                welcome_message = (
-                    f"🎉 Welcome {member.mention} to {member.guild.name}! 🎉\n"
-                    "We're thrilled to have you here! Make sure to check out our channels and enjoy your stay. 🎊"
-                )
-                image_url = "https://github.com/Momonga-OP/Start2000/blob/main/Alliance%20Start2000.png?raw=true"
-                embed = discord.Embed(description=welcome_message, color=discord.Color.blue())
-                embed.set_image(url=image_url)
-                await public_channel.send(embed=embed)
-                print(f"Public welcome message sent successfully to {member.name} in server {member.guild.name}.")
+                public_channel = member.guild.get_channel(1300093554399645707)  # Public channel ID
+                if public_channel:
+                    welcome_message = (
+                        f"🎉 Bienvenue {member.mention} à Sparta! 🎉\n"
+                        "Nous sommes ravis de vous accueillir ici ! N'oubliez pas de consulter nos salons et de profiter de votre séjour. 🎊"
+                    )
+                    image_url = "https://github.com/Momonga-OP/Start2000/blob/main/Alliance%20Start2000.png?raw=true"
+                    embed = discord.Embed(description=welcome_message, color=discord.Color.blue())
+                    embed.set_image(url=image_url)
+                    await public_channel.send(embed=embed)
+                    print(f"Public welcome message sent successfully for {member.name}.")
+                else:
+                    print("Public channel not found or inaccessible.")
+
+                # Log member join
+                print(f"New member detected: {member.name} joined {member.guild.name}.")
             except Exception as e:
-                print(f"Error sending welcome message in server {member.guild.name}: {e.__class__.__name__}: {e}")
-        else:
-            print(f"Member joined an untracked server: {member.guild.name} (ID: {member.guild.id}).")
+                print(f"Error in on_member_join: {e}")
 
 async def setup(bot):
     await bot.add_cog(WelcomeSparta(bot))
