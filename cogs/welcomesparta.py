@@ -7,10 +7,13 @@ class WelcomeSparta(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        # Check if the member joined the specific server
+        # Ensure the bot detects new members when they join the specific server
         if member.guild.id == 1300093554064097400:  # Target server ID
             try:
-                # Send public welcome message
+                # Log the detection of a new member
+                print(f"Detected new member: {member.name} joined the server {member.guild.name}.")
+
+                # Announce welcome message in the specified channel
                 public_channel = member.guild.get_channel(1300093554399645707)  # Public channel ID
                 if public_channel:
                     welcome_message = (
@@ -21,14 +24,25 @@ class WelcomeSparta(commands.Cog):
                     embed = discord.Embed(description=welcome_message, color=discord.Color.blue())
                     embed.set_image(url=image_url)
                     await public_channel.send(embed=embed)
-                    print(f"Public welcome message sent successfully for {member.name}.")
+                    print(f"Welcome message sent successfully for {member.name}.")
                 else:
                     print("Public channel not found or inaccessible.")
 
-                # Log member join
-                print(f"New member detected: {member.name} joined {member.guild.name}.")
             except Exception as e:
                 print(f"Error in on_member_join: {e}")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # Ensure the bot is ready and connected to the target channel
+        guild = self.bot.get_guild(1300093554064097400)
+        if guild:
+            public_channel = guild.get_channel(1300093554399645707)
+            if public_channel:
+                print(f"Bot is now focused on channel: {public_channel.name} (ID: {public_channel.id}) in server {guild.name}.")
+            else:
+                print("Target public channel not found or inaccessible.")
+        else:
+            print("Target guild not found or inaccessible.")
 
 async def setup(bot):
     await bot.add_cog(WelcomeSparta(bot))
