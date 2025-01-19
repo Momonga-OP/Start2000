@@ -12,7 +12,6 @@ class Rules(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"{self.bot.user} is ready and Rules Cog is active!")
-        # Post the rules when the bot starts
         await self.post_rules()
 
     async def fetch_rules(self):
@@ -33,21 +32,24 @@ class Rules(commands.Cog):
 
         rules_content = await self.fetch_rules()
         if rules_content:
-            embed = discord.Embed(
-                title="Server Rules",
-                description=rules_content,
-                color=discord.Color.blue()
-            )
-            embed.set_footer(text="Please react to agree and gain access to the server.")
+            # Split content into chunks of 2000 characters
+            chunks = [rules_content[i:i+2000] for i in range(0, len(rules_content), 2000)]
 
-            # Delete old messages and post new rules
-            await channel.purge(limit=10)
-            rules_message = await channel.send(embed=embed)
-            await rules_message.add_reaction("✅")  # Checkmark emoji
+            await channel.purge(limit=10)  # Clear old messages
+            for i, chunk in enumerate(chunks):
+                embed = discord.Embed(
+                    title=f"Server Rules (Part {i + 1})" if len(chunks) > 1 else "Server Rules",
+                    description=chunk,
+                    color=discord.Color.blue()
+                )
+                embed.set_footer(text="Please react to agree and gain access to the server.")
+                rules_message = await channel.send(embed=embed)
+                if i == 0:  # Add reaction to the first part only
+                    await rules_message.add_reaction("\u2705")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.channel_id == self.rules_channel_id and str(payload.emoji) == "✅":
+        if payload.channel_id == self.rules_channel_id and str(payload.emoji) == "\u2705":
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
             role = guild.get_role(self.role_to_assign)
