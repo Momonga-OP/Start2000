@@ -67,7 +67,7 @@ EXTENSIONS = [
     'cogs.admin',
     'cogs.relocate', 'cogs.watermark', 'cogs.talk', 'cogs.role',
     'cogs.watermark_user', 'cogs.metiers',
-    'cogs.image_converter', 'cogs.startguild',
+    'cogs.image_converter', 'cogs.startguild', 'cogs.clear',
     'cogs.alerts', 'cogs.welcomesparta',
     'cogs.super', 'cogs.translator', 'cogs.voice', 'cogs.rules',
 ]
