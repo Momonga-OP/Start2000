@@ -22,7 +22,7 @@ class WelcomeSparta(commands.Cog):
                 
             try:
                 welcome_message = (
-                    f"🎉 Bienvenue {member.mention} à Sparta! 🎉\n"
+                    f"🎉 Bienvenue {member.mention} à Alliance Start ! 🎉\n"
                     "Nous sommes ravis de vous accueillir ici ! N'oubliez pas de consulter nos salons et de profiter de votre séjour. 🎊"
                 )
                 image_url = "https://github.com/Momonga-OP/Start2000/blob/main/Alliance%20Start2000.png?raw=true"
