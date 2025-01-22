@@ -80,8 +80,11 @@ class StartGuildCog(commands.Cog):
             ),
             color=discord.Color.blurple()
         )
-        embed.set_footer(text="Alliance START | Alert System", icon_url="...")  # Add a valid URL for the icon
-
+        embed.set_footer(
+            text="Alliance START | Alert System",
+            icon_url="https://cdn.discordapp.com/embed/avatars/0.png"
+        )   
+        
         # Add statistics to the embed
         for guild_name in self.member_counts.keys():
             stats = self.get_ping_stats(guild_name)
