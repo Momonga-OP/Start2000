@@ -61,6 +61,14 @@ class AlertActionView(View):
         self.lost_button.callback = self.mark_as_lost
         self.add_item(self.lost_button)
 
+        self.screens_def_button = Button(
+            label="Screens-Def",
+            style=discord.ButtonStyle.primary,
+            emoji="🖼️"
+        )
+        self.screens_def_button.callback = self.upload_screenshot
+        self.add_item(self.screens_def_button)
+
     async def add_note_callback(self, interaction: discord.Interaction):
         if interaction.channel_id != ALERTE_DEF_CHANNEL_ID:
             await interaction.response.send_message("Vous ne pouvez pas ajouter de note ici.", ephemeral=True)
@@ -91,6 +99,25 @@ class AlertActionView(View):
 
         await self.message.edit(embed=embed)
         await interaction.response.send_message(f"Alerte marquée comme **{status}** avec succès.", ephemeral=True)
+
+    async def upload_screenshot(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Veuillez uploader votre screenshot (formats supportés: jpg, png).", ephemeral=True)
+
+        def check(m):
+            return m.author == interaction.user and m.attachments
+
+        try:
+            message = await self.bot.wait_for('message', check=check, timeout=60.0)
+            attachment = message.attachments[0]
+            if attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                embed = self.message.embeds[0]
+                embed.set_image(url=attachment.url)
+                await self.message.edit(embed=embed)
+                await interaction.followup.send("Screenshot ajouté avec succès !", ephemeral=True)
+            else:
+                await interaction.followup.send("Format de fichier non supporté. Veuillez uploader un fichier jpg ou png.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"Une erreur est survenue: {e}", ephemeral=True)
 
 
 class GuildPingView(View):
