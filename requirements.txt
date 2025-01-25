@@ -9,3 +9,4 @@ openpyxl
 py-cord
 Pillow
 pymongo
+openai
