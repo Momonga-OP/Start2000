@@ -6,7 +6,7 @@ class DeepSeekCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # Initialize the OpenAI client with your API key
-        self.client = OpenAI(api_key="deepseek_token", base_url="https://api.deepseek.com")
+        self.client = OpenAI(api_key="DEEPSEEK_TOKEN", base_url="https://api.deepseek.com")
         # Replace with your bot's ID
         self.BOT_ID = 1309408833818333264
 
