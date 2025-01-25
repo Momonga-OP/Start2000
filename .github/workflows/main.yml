@@ -45,7 +45,8 @@ jobs:
       # Step 6: Run the bot
       - name: Run the bot
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}  # Discord bot token
+          MONGO_URI: ${{ secrets.MONGO_URI }}         # MongoDB URI
+          DEEPSEEK_TOKEN: ${{ secrets.DEEPSEEK_TOKEN }}  # DeepSeek API token
         run: |
           python main.py
