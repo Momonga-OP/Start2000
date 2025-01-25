@@ -7,7 +7,7 @@ import os
 import re
 import logging
 import aiofiles
-from discord.ext.commands import CooldownMapping
+from discord.ext.commands import CooldownMapping, BucketType
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,7 @@ class Alerts(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.allowed_channel_id = 1247728738326679583  # Replace with your specific channel ID
-        self._cd = CooldownMapping.from_cooldown(1, 60, commands.BucketType.user)  # 1 use per 60 seconds per user
+        self._cd = CooldownMapping.from_cooldown(1, 60, BucketType.user)  # 1 use per 60 seconds per user
 
     def filter_relevant_messages(self, messages):
         """Filter messages that are sent by bots and mention everyone or roles."""
@@ -58,7 +58,7 @@ class Alerts(commands.Cog):
     async def alert(self, interaction: discord.Interaction):
         """Generate a report of notifications sent in the last 7 days."""
         # Check cooldown
-        bucket = self._cd.get_bucket(interaction.user)  # Use interaction.user instead of interaction.message
+        bucket = self._cd.get_bucket(interaction.user.id)  # Use the user's ID for cooldown tracking
         retry_after = bucket.update_rate_limit()
         if retry_after:
             await interaction.response.send_message(f"Please wait {retry_after:.2f} seconds before using this command again.", ephemeral=True)
