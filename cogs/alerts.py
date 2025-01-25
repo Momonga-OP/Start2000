@@ -58,7 +58,7 @@ class Alerts(commands.Cog):
     async def alert(self, interaction: discord.Interaction):
         """Generate a report of notifications sent in the last 7 days."""
         # Check cooldown
-        bucket = self._cd.get_bucket(interaction.message)
+        bucket = self._cd.get_bucket(interaction.user)  # Use interaction.user instead of interaction.message
         retry_after = bucket.update_rate_limit()
         if retry_after:
             await interaction.response.send_message(f"Please wait {retry_after:.2f} seconds before using this command again.", ephemeral=True)
