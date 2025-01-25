@@ -8,5 +8,4 @@ openpyxl
 py-cord
 Pillow
 pymongo
-googletrans==3.0.0
 openai>=1.0.0
