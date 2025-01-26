@@ -14,24 +14,14 @@ logger = logging.getLogger(__name__)
 
 # Role configuration
 ROLE_DATA: Dict[str, Dict[str, any]] = {
-    "Darkness": {
-        "emoji": "<:Darkness:1307418763276324944>",
-        "role_id": 1300093554064097407,
-        "role_name": "Darkness",
-        "color": discord.Color.dark_grey()
-    },
+
     "GTO": {
         "emoji": "<:GTO:1307418692992237668>",
         "role_id": 1300093554080612363,
         "role_name": "GTO",
         "color": discord.Color.blue()
     },
-    "Aversion": {
-        "emoji": "<:aversion:1307418759002198086>",
-        "role_id": 1300093554064097409,
-        "role_name": "Aversion",
-        "color": discord.Color.purple()
-    },
+
     "LMDF": {
         "emoji": "<:lmdf:1307418765142786179>",
         "role_id": 1300093554080612364,
@@ -62,10 +52,10 @@ ROLE_DATA: Dict[str, Dict[str, any]] = {
         "role_name": "Crescent",
         "color": discord.Color.blue()
     },
-    "DieHard": {
-        "emoji": "<:DieHard:1328374141237329972>",
-        "role_id": 1300093554064097405,
-        "role_name": "DieHard",
+    "Academie": {
+        "emoji": "<:Academie:1333147586986774739>",
+        "role_id": 1300093554080612365,
+        "role_name": "Academie",
         "color": discord.Color.dark_red()
     },
     "Deviance": {
