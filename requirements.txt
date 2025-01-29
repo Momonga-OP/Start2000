@@ -6,7 +6,7 @@ pandas
 pynacl
 openpyxl
 py-cord
-Pillow
 pymongo
-googletrans == 4.0.0-rc1
+googletrans==4.0.0-rc1
 aiofiles
+psycopg2-binary
