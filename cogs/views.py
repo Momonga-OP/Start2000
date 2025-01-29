@@ -1,7 +1,7 @@
 import discord
 from discord.ui import View, Button, Modal, TextInput
 import random
-from .config import ALERTE_DEF_CHANNEL_ID, ALERT_MESSAGES, GUILD_ID, GUILD_EMOJIS_ROLES
+from .config import ALERTE_DEF_CHANNEL_ID, ALERT_MESSAGES, GUILD_ID, get_guild_emojis_roles
 
 
 class NoteModal(Modal):
@@ -124,7 +124,8 @@ class GuildPingView(View):
     def __init__(self, bot):
         super().__init__(timeout=None)
         self.bot = bot
-        for guild_name, data in GUILD_EMOJIS_ROLES.items():
+        guild_data = get_guild_emojis_roles()
+        for guild_name, data in guild_data.items():
             button = Button(
                 label=f"  {guild_name.upper()}  ",
                 emoji=data["emoji"],
@@ -147,7 +148,7 @@ class GuildPingView(View):
                     await interaction.response.send_message("Canal d'alerte introuvable !", ephemeral=True)
                     return
 
-                role = interaction.guild.get_role(role_id)
+                role = interaction.guild.get_role(int(role_id))
                 if not role:
                     await interaction.response.send_message(f"Rôle pour {guild_name} introuvable !", ephemeral=True)
                     return
