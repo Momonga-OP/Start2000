@@ -5,7 +5,7 @@ import asyncio
 import logging
 from database import initialize_db  # Import the database initialization function
 
-# Set up logging
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
