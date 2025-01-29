@@ -1,0 +1,6 @@
+CREATE TABLE guilds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_name TEXT NOT NULL UNIQUE,
+    emoji_id TEXT NOT NULL,
+    role_id TEXT NOT NULL
+);
