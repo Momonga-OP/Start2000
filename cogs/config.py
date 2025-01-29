@@ -1,4 +1,4 @@
-from .database import get_all_guilds
+from database import get_all_guilds
 
 # Configuration
 GUILD_ID = 1300093554064097400  # Replace with your guild ID
