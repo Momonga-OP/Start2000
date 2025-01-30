@@ -37,15 +37,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 5: Set up SQLite Database
-      - name: Set up SQLite Database
-        run: |
-          sqlite3 conversation_history.db "CREATE TABLE IF NOT EXISTS conversation (user_id INTEGER, prompt TEXT, response TEXT);"
-
-      # Step 6: Run the bot
+      # Step 5: Run the bot
       - name: Run the bot
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}  # Discord bot token
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}   # Supabase PostgreSQL connection string
           MONGO_URI: ${{ secrets.MONGO_URI }}         # MongoDB URI
           DEEPSEEK_TOKEN: ${{ secrets.DEEPSEEK_TOKEN }}  # DeepSeek API token
         run: |
