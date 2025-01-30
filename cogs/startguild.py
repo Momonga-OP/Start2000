@@ -3,7 +3,7 @@ from discord.ext import commands
 from collections import defaultdict
 from datetime import datetime, timedelta
 import asyncio
-from config import GUILD_ID, PING_DEF_CHANNEL_ID, ALERTE_DEF_CHANNEL_ID, get_guild_emojis_roles
+from config import GUILD_ID, PING_DEF_CHANNEL_ID, ALERTE_DEF_CHANNEL_ID
 from views import GuildPingView
 
 class StartGuildCog(commands.Cog):
