@@ -3,7 +3,6 @@ from discord.ext import commands
 import os
 import asyncio
 import logging
-from database import initialize_db  # Import the database initialization function
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
