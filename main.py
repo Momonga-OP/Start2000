@@ -4,33 +4,25 @@ import os
 import asyncio
 import logging
 
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Define intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-# Create the bot
+
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Constants
 OWNER_ID = 486652069831376943  # Replace with your Discord user ID
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-# Initialize the database
-initialize_db()
-
 @bot.event
 async def on_ready():
-    """Event triggered when the bot is ready."""
     logger.info(f'Logged in as {bot.user}')
     await sync_commands()
 
 async def sync_commands():
-    """Sync slash commands with Discord."""
     if not hasattr(bot, 'synced'):
         try:
             synced = await bot.tree.sync()
@@ -41,49 +33,38 @@ async def sync_commands():
 
 @bot.command(name='memory')
 async def memory_command(ctx):
-    """Command to notify users about memory management."""
     await ctx.send("Memory management has been removed from this bot.")
 
 @bot.event
 async def on_message(message: discord.Message):
-    """Event triggered when a message is sent."""
     if message.author != bot.user:
         logger.info(f"Message from {message.author}: {message.content}")
 
-    # Forward DMs to the bot owner
     if isinstance(message.channel, discord.DMChannel) and message.author != bot.user:
         await forward_dm(message)
-
-    # Process commands
     await bot.process_commands(message)
 
 async def forward_dm(message: discord.Message):
-    """Forward DMs to the bot owner."""
     owner = await bot.fetch_user(OWNER_ID)
     if owner:
         await owner.send(f"Message from {message.author}: {message.content}")
 
 @bot.event
 async def on_disconnect():
-    """Event triggered when the bot disconnects."""
     logger.info("Bot disconnected")
 
 @bot.event
 async def on_error(event: str, *args, **kwargs):
-    """Event triggered when an error occurs."""
     logger.exception(f"An error occurred in event {event}")
 
 @bot.event
 async def on_close():
-    """Event triggered when the bot is closing."""
     logger.info("Bot is closing")
     await close_sessions()
 
 async def close_sessions():
-    """Perform cleanup before closing the bot."""
     logger.info("Performing cleanup before closing...")
 
-# List of extensions (cogs) to load
 EXTENSIONS = [
     'cogs.admin',
     'cogs.relocate', 'cogs.watermark', 'cogs.talk', 'cogs.role',
@@ -94,7 +75,6 @@ EXTENSIONS = [
 ]
 
 async def load_extensions():
-    """Load all extensions (cogs) listed in EXTENSIONS."""
     for extension in EXTENSIONS:
         try:
             await bot.load_extension(extension)
@@ -103,17 +83,11 @@ async def load_extensions():
             logger.exception(f"Failed to load extension {extension}")
 
 async def main():
-    """Main function to start the bot."""
     async with bot:
-        # Load extensions
         await load_extensions()
-
-        # Check if the bot token is available
         if not TOKEN:
             logger.error("Bot token not found")
             return
-
-        # Start the bot
         try:
             await bot.start(TOKEN)
         except discord.LoginFailure:
