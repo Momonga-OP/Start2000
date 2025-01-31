@@ -1,5 +1,3 @@
-# translator.py
-
 import discord
 from discord.ext import commands
 from googletrans import Translator, LANGUAGES
@@ -18,12 +16,18 @@ class TranslatorCog(commands.Cog):
 
         # Language map for reactions
         self.LANGUAGE_MAP = {
-            "🇺🇸": "en",  # English
-            "🇫🇷": "fr",  # French
-            "🇪🇸": "es",  # Spanish
-            "🇦🇪": "ar",  # Arabic
-            "🇩🇪": "de",  # German
+            "🇺🇸": "en",    # English
+            "🇫🇷": "fr",    # French
+            "🇪🇸": "es",    # Spanish
+            "🇦🇪": "ar",    # Modern Standard Arabic
+            "🇲🇦": "ar",    # Moroccan Arabic (using MSA as base)
+            "🇩🇪": "de",    # German
             # Add more languages as needed
+        }
+
+        # Special display names for dialects
+        self.DIALECT_NAMES = {
+            "🇲🇦": "Moroccan Arabic (Darija)",
         }
 
     @commands.Cog.listener()
@@ -61,7 +65,13 @@ class TranslatorCog(commands.Cog):
             translation = self.translator.translate(original_text, dest=language_code)
             translated_text = translation.text
             source_lang = LANGUAGES.get(translation.src, translation.src).capitalize()
-            target_lang = LANGUAGES.get(language_code, language_code).capitalize()
+            
+            # Use special dialect name if available, otherwise use standard language name
+            if emoji_used in self.DIALECT_NAMES:
+                target_lang = self.DIALECT_NAMES[emoji_used]
+            else:
+                target_lang = LANGUAGES.get(language_code, language_code).capitalize()
+            
             print(f"Translation successful: '{original_text}' from {source_lang} to {target_lang} -> '{translated_text}'")
 
             embed = discord.Embed(
@@ -72,6 +82,15 @@ class TranslatorCog(commands.Cog):
             embed.add_field(name="Original Text", value=f"`{original_text}`", inline=False)
             embed.add_field(name="Translated Text", value=f"`{translated_text}`", inline=False)
             embed.add_field(name="Languages", value=f"**From:** {source_lang}\n**To:** {target_lang}", inline=False)
+            
+            # Add note for Moroccan Arabic
+            if emoji_used == "🇲🇦":
+                embed.add_field(
+                    name="Note",
+                    value="This translation uses Modern Standard Arabic as a base. Some expressions may need to be adapted for Moroccan dialect.",
+                    inline=False
+                )
+            
             embed.set_author(name=user.display_name, icon_url=user.avatar.url)
 
             await channel.send(embed=embed)
@@ -105,6 +124,15 @@ class TranslatorCog(commands.Cog):
             embed.add_field(name="Original Text", value=f"`{original_text}`", inline=False)
             embed.add_field(name="Translated Text", value=f"`{translated_text}`", inline=False)
             embed.add_field(name="Languages", value=f"**From:** {source_lang}\n**To:** {target_lang}", inline=False)
+            
+            # Add note if translating to Arabic (potential Moroccan dialect use)
+            if lang == "ar":
+                embed.add_field(
+                    name="Note",
+                    value="If using for Moroccan Arabic (Darija), note that this translation uses Modern Standard Arabic as a base. Some expressions may need to be adapted.",
+                    inline=False
+                )
+            
             embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
 
             await ctx.send(embed=embed)
