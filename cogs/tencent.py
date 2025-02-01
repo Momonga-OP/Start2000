@@ -1,16 +1,26 @@
 import discord
 from discord import app_commands
 import os
-import subprocess
-from typing import Optional
-from discord.ext import commands
+import asyncio
 import sys
 import shutil
+from typing import Optional
+from discord.ext import commands
 
 class Hunyuan3DCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.is_initialized = False
+        
+    async def run_subprocess(self, cmd, **kwargs):
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            **kwargs
+        )
+        stdout, stderr = await process.communicate()
+        return process.returncode, stdout, stderr
         
     async def initialize_models(self):
         """Initialize the required models and dependencies"""
@@ -19,37 +29,34 @@ class Hunyuan3DCommands(commands.Cog):
             
         try:
             # Install huggingface-cli
-            process = subprocess.run(
-                [sys.executable, "-m", "pip", "install", "huggingface_hub[cli]"],
-                capture_output=True,
-                text=True
+            returncode, stdout, stderr = await self.run_subprocess(
+                [sys.executable, "-m", "pip", "install", "huggingface_hub[cli]"]
             )
-            if process.returncode != 0:
-                print(f"Error installing huggingface-cli: {process.stderr}")
+            
+            if returncode != 0:
+                print(f"Error installing huggingface-cli: {stderr.decode()}")
                 return False
                 
             # Create weights directory
             os.makedirs("weights", exist_ok=True)
             os.makedirs("weights/hunyuanDiT", exist_ok=True)
             
-            # Download models
-            processes = [
-                subprocess.run(
-                    ["huggingface-cli", "download", "tencent/Hunyuan3D-1", "--local-dir", "./weights"],
-                    capture_output=True,
-                    text=True
+            # Download models asynchronously
+            tasks = [
+                self.run_subprocess(
+                    ["huggingface-cli", "download", "tencent/Hunyuan3D-1", "--local-dir", "./weights"]
                 ),
-                subprocess.run(
+                self.run_subprocess(
                     ["huggingface-cli", "download", "Tencent-Hunyuan/HunyuanDiT-v1.1-Diffusers-Distilled", 
-                     "--local-dir", "./weights/hunyuanDiT"],
-                    capture_output=True,
-                    text=True
+                     "--local-dir", "./weights/hunyuanDiT"]
                 )
             ]
             
-            for process in processes:
-                if process.returncode != 0:
-                    print(f"Error downloading model: {process.stderr}")
+            results = await asyncio.gather(*tasks)
+            
+            for returncode, stdout, stderr in results:
+                if returncode != 0:
+                    print(f"Error downloading model: {stderr.decode()}")
                     return False
             
             self.is_initialized = True
@@ -73,6 +80,16 @@ class Hunyuan3DCommands(commands.Cog):
             await interaction.followup.send("✅ Hunyuan3D setup completed successfully!")
         else:
             await interaction.followup.send("❌ Error setting up Hunyuan3D. Check the bot logs for details.")
+    
+    async def run_generation(self, command):
+        """Run generation command asynchronously"""
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        return process.returncode, stdout, stderr
     
     @app_commands.command(name="text2mesh", description="Generate 3D mesh from text description")
     async def text2mesh(
@@ -110,15 +127,10 @@ class Hunyuan3DCommands(commands.Cog):
                 "--do_render"
             ]
             
-            # Run the generation process
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
+            # Run the generation process asynchronously
+            returncode, stdout, stderr = await self.run_generation(command)
             
-            if process.returncode != 0:
+            if returncode != 0:
                 await interaction.followup.send(f"Error generating 3D mesh: {stderr.decode()}")
                 return
                 
@@ -190,19 +202,14 @@ class Hunyuan3DCommands(commands.Cog):
                 "--do_render"
             ]
             
-            # Run the generation process
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
+            # Run the generation process asynchronously
+            returncode, stdout, stderr = await self.run_generation(command)
             
             # Clean up the temporary image
             if os.path.exists(image_path):
                 os.remove(image_path)
             
-            if process.returncode != 0:
+            if returncode != 0:
                 await interaction.followup.send(f"Error generating 3D mesh: {stderr.decode()}")
                 return
                 
