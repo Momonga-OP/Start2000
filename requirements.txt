@@ -10,17 +10,3 @@ pymongo
 googletrans==4.0.0-rc1
 aiofiles
 psycopg2-binary
-huggingface-hub[cli]
-numpy>=1.21.0
-torch>=1.9.0
-torchvision>=0.10.0
-opencv-python>=4.5.0
-tqdm>=4.62.0
-transformers>=4.30.0
-diffusers>=0.11.0
-accelerate>=0.18.0
-safetensors>=0.3.1
-scipy>=1.7.0
-trimesh>=3.9.0
-pyrender>=0.1.45
-open3d>=0.17.0
