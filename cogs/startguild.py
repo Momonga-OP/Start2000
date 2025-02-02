@@ -76,7 +76,7 @@ class StartGuildCog(commands.Cog):
         
         embed.set_author(
             name="Système d'Alerte START",
-            icon_url="https://static.ankama.com/dofus/renderer/emblem/alliance/194/15/0xE2088/0xFEF9FA/35_35-0.png"
+            icon_url="https://github.com/Momonga-OP/Start2000/blob/main/35_35-0%20(2).png?raw=true"
         )
         
         embed.description = (
@@ -109,7 +109,7 @@ class StartGuildCog(commands.Cog):
 
         embed.set_footer(
             text=f"Dernière actualisation: {datetime.now().strftime('%H:%M:%S')}",
-            icon_url="https://cdn.discordapp.com/embed/avatars/4.png"
+            icon_url="https://github.com/Momonga-OP/Start2000/blob/main/hourglass.png?raw=true"
         )
         
         return embed
