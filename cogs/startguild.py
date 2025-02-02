@@ -24,14 +24,36 @@ class StartGuildCog(commands.Cog):
     async def update_member_counts(self):
         """Mise à jour précise des membres connectés"""
         guild = self.bot.get_guild(GUILD_ID)
-        if guild:
-            await guild.chunk()  # Charge tous les membres
+        if not guild:
+            return
+
+        try:
+            # Reset counts
+            self.member_counts.clear()
+            
+            # Ensure we have all members loaded
+            if guild.chunk_size < len(guild.members):
+                await guild.chunk()
+
+            # Get all members with their current status
             for role in guild.roles:
                 if role.name.startswith("DEF"):
-                    self.member_counts[role.name] = sum(
-                        1 for m in role.members 
-                        if not m.bot and m.raw_status != 'offline'
-                    )
+                    online_count = 0
+                    for member in role.members:
+                        if not member.bot:  # Exclude bots
+                            # Check all possible online statuses
+                            if (isinstance(member, discord.Member) and 
+                                member.status != discord.Status.offline):
+                                online_count += 1
+                    
+                    self.member_counts[role.name] = online_count
+
+        except Exception as e:
+            print(f"Error updating member counts: {e}")
+            # Set default values in case of error
+            for role in guild.roles:
+                if role.name.startswith("DEF"):
+                    self.member_counts[role.name] = 0
 
     def add_ping_record(self, guild_name: str, author_id: int):
         timestamp = datetime.now()
@@ -86,7 +108,7 @@ class StartGuildCog(commands.Cog):
             "2️⃣ Suivez les mises à jour dans #alerte-def\n"
             "3️⃣ Ajoutez des notes si nécessaire\n\n"
             f"👥 Membres connectés: {total_connectes}\n"
-            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
+            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
         )
 
         for guild_name, count in self.member_counts.items():
@@ -234,7 +256,10 @@ class StartGuildCog(commands.Cog):
                     add_reactions=False,
                     create_public_threads=False
                 )
-                
+        
+        # Start background task to update member counts periodically
+        self.bot.loop.create_task(self.periodic_update())
+        
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
@@ -242,6 +267,13 @@ class StartGuildCog(commands.Cog):
             )
         )
         print(f"✅ Système opérationnel • {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+
+    async def periodic_update(self):
+        """Background task to update member counts periodically"""
+        while not self.bot.is_closed():
+            await self.update_member_counts()
+            await self.ensure_panel()
+            await asyncio.sleep(60)  # Update every minute
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StartGuildCog(bot))
