@@ -64,7 +64,7 @@ class StartGuildCog(commands.Cog):
         return stats
 
     async def create_panel_embed(self) -> discord.Embed:
-        await self.update_member_counts()  # Actualisation avant affichage
+        await self.update_member_counts()
         
         embed = discord.Embed(
             title="🛡️ Panneau d'Alerte Défense",
@@ -76,19 +76,17 @@ class StartGuildCog(commands.Cog):
         
         embed.set_author(
             name="Système d'Alerte START",
-            icon_url="https://cdn.discordapp.com/attachments/929850884006211594/1127117558352080926/shield.png"
+            icon_url="https://static.ankama.com/dofus/renderer/emblem/alliance/194/15/0xE2088/0xFEF9FA/35_35-0.png"
         )
         
         embed.description = (
-            "```diff\n+ SYSTÈME D'ALERTE GUILDE [v2.6.1]\n```\n"
+            "```diff\n+ SYSTÈME D'ALERTE GUILDE [v2.7.0]\n```\n"
             "**📋 Instructions :**\n"
             "1️⃣ Cliquez sur le bouton de votre guilde\n"
             "2️⃣ Suivez les mises à jour dans #alerte-def\n"
             "3️⃣ Ajoutez des notes si nécessaire\n\n"
             f"👥 Membres connectés: {total_connectes}\n"
-            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m\n"
-            "[2;34m[!] Latence: [0m[2;33m{0}ms[0m```"
-            .format(round(self.bot.latency * 1000))
+            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
         )
 
         for guild_name, count in self.member_counts.items():
@@ -99,7 +97,7 @@ class StartGuildCog(commands.Cog):
                 f"```prolog\n"
                 f"[🟢 Connectés] {count}\n"
                 f"[📨 Pings 24h] {stats['total_24h']}\n"
-                f"[⏱ Cooldown] {'Actif' if self.cooldowns.get(guild_name) else 'Inactif'}\n"
+                f"[⏱ Cooldown] {'🟠 Actif' if self.cooldowns.get(guild_name) else '🟢 Inactif'}\n"
                 f"[📊 Activité] {activite}```"
             )
             
@@ -110,7 +108,7 @@ class StartGuildCog(commands.Cog):
             )
 
         embed.set_footer(
-            text=f"Actualisé à {datetime.now().strftime('%H:%M:%S')}",
+            text=f"Dernière actualisation: {datetime.now().strftime('%H:%M:%S')}",
             icon_url="https://cdn.discordapp.com/embed/avatars/4.png"
         )
         
@@ -149,7 +147,7 @@ class StartGuildCog(commands.Cog):
     async def handle_ping(self, guild_name):
         """Gestion améliorée du cooldown"""
         now = datetime.now().timestamp()
-        if self.cooldowns.get(guild_name):
+        if guild_name in self.cooldowns:
             if now < self.cooldowns[guild_name]:
                 return self.cooldowns[guild_name] - now
             del self.cooldowns[guild_name]
@@ -166,7 +164,6 @@ class StartGuildCog(commands.Cog):
                 description=f"Veuillez patienter {cooldown:.1f}s avant une nouvelle alerte pour {guild_name}",
                 color=discord.Color.orange()
             )
-            embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1127120140033732678.gif")
             return await ctx.send(embed=embed)
 
         self.add_ping_record(guild_name, ctx.author.id)
@@ -192,7 +189,6 @@ class StartGuildCog(commands.Cog):
                   f"- Prochaine alerte possible dans: 15s```",
             inline=False
         )
-        reponse.set_thumbnail(url="https://cdn.discordapp.com/emojis/1127120140033732678.gif")
         
         await ctx.send(embed=reponse)
         await self.send_alert_log(guild_name, ctx.author)
@@ -245,7 +241,7 @@ class StartGuildCog(commands.Cog):
                 name=f"{sum(self.member_counts.values())} défenseurs"
             )
         )
-        print(f"✅ Système opérationnel • Version {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+        print(f"✅ Système opérationnel • {datetime.now().strftime('%d/%m/%Y %H:%M')}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StartGuildCog(bot))
