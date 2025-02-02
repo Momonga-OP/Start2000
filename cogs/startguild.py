@@ -22,14 +22,15 @@ class StartGuildCog(commands.Cog):
         return f"{filled}{empty} {int(percentage * 100)}%"
 
     async def update_member_counts(self):
-        """Mise à jour des membres en ligne"""
+        """Mise à jour précise des membres connectés"""
         guild = self.bot.get_guild(GUILD_ID)
         if guild:
+            await guild.chunk()  # Charge tous les membres
             for role in guild.roles:
                 if role.name.startswith("DEF"):
                     self.member_counts[role.name] = sum(
                         1 for m in role.members 
-                        if not m.bot and m.status == discord.Status.online
+                        if not m.bot and m.raw_status != 'offline'
                     )
 
     def add_ping_record(self, guild_name: str, author_id: int):
@@ -63,30 +64,31 @@ class StartGuildCog(commands.Cog):
         return stats
 
     async def create_panel_embed(self) -> discord.Embed:
+        await self.update_member_counts()  # Actualisation avant affichage
+        
         embed = discord.Embed(
             title="🛡️ Panneau d'Alerte Défense",
             color=discord.Color.gold(),
             timestamp=datetime.now()
         )
         
+        total_connectes = sum(self.member_counts.values())
+        
         embed.set_author(
             name="Système d'Alerte START",
             icon_url="https://cdn.discordapp.com/attachments/929850884006211594/1127117558352080926/shield.png"
         )
         
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/929850884006211594/1127117558352080926/shield.png")
-
-        # Nouvelle section d'instructions
         embed.description = (
-            "```diff\n+ SYSTÈME D'ALERTE GUILDE [v2.5.0]\n```\n"
+            "```diff\n+ SYSTÈME D'ALERTE GUILDE [v2.6.1]\n```\n"
             "**📋 Instructions :**\n"
-            "1️⃣ Cliquez sur le bouton correspondant à votre guilde.\n"
-            "2️⃣ Suivez les mises à jour dans le canal d'alerte.\n"
-            "3️⃣ Ajoutez des notes si nécessaire.\n\n"
-            "🔄 Interface de contrôle :\n"
+            "1️⃣ Cliquez sur le bouton de votre guilde\n"
+            "2️⃣ Suivez les mises à jour dans #alerte-def\n"
+            "3️⃣ Ajoutez des notes si nécessaire\n\n"
+            f"👥 Membres connectés: {total_connectes}\n"
             "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m\n"
-            "[2;34m[!] Membres connectés: [0m[2;33m{0}[0m```"
-            .format(sum(self.member_counts.values()))
+            "[2;34m[!] Latence: [0m[2;33m{0}ms[0m```"
+            .format(round(self.bot.latency * 1000))
         )
 
         for guild_name, count in self.member_counts.items():
@@ -95,20 +97,20 @@ class StartGuildCog(commands.Cog):
             
             valeur = (
                 f"```prolog\n"
-                f"[🟢 En ligne]  {count}\n"
+                f"[🟢 Connectés] {count}\n"
                 f"[📨 Pings 24h] {stats['total_24h']}\n"
-                f"[👤 Uniques]   {stats['unique_24h']}\n"
-                f"[📊 Activité]  {activite}```"
+                f"[⏱ Cooldown] {'Actif' if self.cooldowns.get(guild_name) else 'Inactif'}\n"
+                f"[📊 Activité] {activite}```"
             )
             
             embed.add_field(
-                name=f"📌 Guilde {guild_name}",
+                name=f"📌 {guild_name}",
                 value=valeur,
                 inline=True
             )
 
         embed.set_footer(
-            text="Système de gestion des alertes • Actualisation:",
+            text=f"Actualisé à {datetime.now().strftime('%H:%M:%S')}",
             icon_url="https://cdn.discordapp.com/embed/avatars/4.png"
         )
         
@@ -116,7 +118,7 @@ class StartGuildCog(commands.Cog):
 
     async def ensure_panel(self):
         await self.update_member_counts()
-
+        
         guild = self.bot.get_guild(GUILD_ID)
         if not guild:
             return
@@ -145,20 +147,23 @@ class StartGuildCog(commands.Cog):
             await self.panel_message.pin(reason="Mise à jour du panneau")
 
     async def handle_ping(self, guild_name):
+        """Gestion améliorée du cooldown"""
+        now = datetime.now().timestamp()
         if self.cooldowns.get(guild_name):
-            reste = self.cooldowns[guild_name] - datetime.now()
-            return reste.total_seconds()
-
-        self.cooldowns[guild_name] = datetime.now() + timedelta(seconds=15)
+            if now < self.cooldowns[guild_name]:
+                return self.cooldowns[guild_name] - now
+            del self.cooldowns[guild_name]
+        
+        self.cooldowns[guild_name] = now + 15  # 15 secondes de cooldown
         return True
 
     @commands.command(name="alerte_guild")
     async def ping_guild(self, ctx, guild_name: str):
-        statut_cooldown = await self.handle_ping(guild_name)
-        if isinstance(statut_cooldown, float):
+        cooldown = await self.handle_ping(guild_name)
+        if isinstance(cooldown, float):
             embed = discord.Embed(
                 title="⏳ Temporisation Active",
-                description=f"Veuillez attendre {statut_cooldown:.1f}s avant de relancer l'alerte pour {guild_name}",
+                description=f"Veuillez patienter {cooldown:.1f}s avant une nouvelle alerte pour {guild_name}",
                 color=discord.Color.orange()
             )
             embed.set_thumbnail(url="https://cdn.discordapp.com/emojis/1127120140033732678.gif")
@@ -169,24 +174,25 @@ class StartGuildCog(commands.Cog):
 
         stats = self.get_ping_stats(guild_name)
         reponse = discord.Embed(
-            title=f"🚨 Alerte activée : {guild_name}",
+            title=f"🚨 Alerte {guild_name} Activée",
+            description=f"🔔 {self.member_counts.get(guild_name, 0)} membres disponibles",
             color=discord.Color.green()
         )
         reponse.add_field(
-            name="Détails de l'activation",
+            name="Détails",
             value=f"**Initiateur:** {ctx.author.mention}\n"
                   f"**Canal:** {ctx.channel.mention}\n"
-                  f"**Membres en ligne:** {self.member_counts.get(guild_name, 0)}",
+                  f"**Priorité:** `Urgente`",
             inline=False
         )
         reponse.add_field(
-            name="Statistiques récentes",
+            name="Statistiques",
             value=f"```diff\n+ Pings 24h: {stats['total_24h']}\n"
-                  f"+ Utilisateurs uniques: {stats['unique_24h']}\n"
-                  f"- Temporisation: 15s```",
+                  f"+ Uniques: {stats['unique_24h']}\n"
+                  f"- Prochaine alerte possible dans: 15s```",
             inline=False
         )
-        reponse.set_footer(text="Système d'alerte guilde • START Alliance")
+        reponse.set_thumbnail(url="https://cdn.discordapp.com/emojis/1127120140033732678.gif")
         
         await ctx.send(embed=reponse)
         await self.send_alert_log(guild_name, ctx.author)
@@ -199,23 +205,24 @@ class StartGuildCog(commands.Cog):
             return
 
         log_embed = discord.Embed(
-            title=f"📢 Alerte Défense {guild_name}",
-            description=f"**Membres en ligne:** {self.member_counts.get(guild_name, 0)}\n"
-                        f"**Initiateur:** {author.mention}\n"
-                        f"**Heure:** {discord.utils.format_dt(datetime.now(), 'F')}",
-            color=discord.Color.blurple()
+            title=f"🚩 Alerte {guild_name}",
+            description=f"@here · Défenseurs requis · {self.member_counts.get(guild_name, 0)} disponibles",
+            color=discord.Color.red()
         )
         log_embed.add_field(
-            name="Procédure d'urgence",
-            value="```fix\n1. Vérifier le canal d'alerte\n2. Confirmer les effectifs\n3. Envoyer le rapport```",
+            name="Informations",
+            value=f"**Initiateur:** {author.mention}\n"
+                  f"**Heure:** {discord.utils.format_dt(datetime.now(), 'F')}\n"
+                  f"**Statut serveur:** `Stable`",
             inline=False
         )
-        log_embed.set_author(
-            name="Commandement Défense START",
-            icon_url=guild.icon.url if guild.icon else None
+        log_embed.add_field(
+            name="Actions Requises",
+            value="```fix\n1. Confirmer disponibilité\n2. Rejoindre le canal vocal\n3. Suivre les instructions```",
+            inline=False
         )
         
-        await channel.send(f"@here Alerte {guild_name}", embed=log_embed)
+        await channel.send(embed=log_embed)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -238,7 +245,7 @@ class StartGuildCog(commands.Cog):
                 name=f"{sum(self.member_counts.values())} défenseurs"
             )
         )
-        print(f"🛡️ Module de défense initialisé sur {len(self.bot.guilds)} serveurs")
+        print(f"✅ Système opérationnel • Version {datetime.now().strftime('%d/%m/%Y %H:%M')}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StartGuildCog(bot))
