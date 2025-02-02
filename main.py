@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.presences = True  # Required to see online/offline status
 
 # Create the bot
 bot = commands.Bot(command_prefix='!', intents=intents)
