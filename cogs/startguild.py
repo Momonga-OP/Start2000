@@ -14,7 +14,6 @@ class StartGuildCog(commands.Cog):
         self.ping_history = defaultdict(list)
         self.member_counts = {}
         self.panel_message: Optional[discord.Message] = None
-        self.last_update = None
 
     @staticmethod
     def create_progress_bar(percentage: float, length: int = 10) -> str:
@@ -22,29 +21,17 @@ class StartGuildCog(commands.Cog):
         empty = '▱' * (length - len(filled))
         return f"{filled}{empty} {int(percentage * 100)}%"
 
-    def is_member_online(self, member: discord.Member) -> bool:
-        return (
-            not member.bot and 
-            member.status != discord.Status.offline and
-            member.status != discord.Status.invisible
-        )
-
     async def update_member_counts(self):
         """Mise à jour précise des membres connectés"""
         guild = self.bot.get_guild(GUILD_ID)
-        if not guild:
-            return
-
-        # Clear previous counts
-        self.member_counts.clear()
-        
-        # Update for each DEF role
-        for role in guild.roles:
-            if role.name.startswith("DEF"):
-                online_count = sum(1 for member in role.members if self.is_member_online(member))
-                self.member_counts[role.name] = online_count
-        
-        self.last_update = datetime.now()
+        if guild:
+            await guild.chunk()  # Charge tous les membres
+            for role in guild.roles:
+                if role.name.startswith("DEF"):
+                    self.member_counts[role.name] = sum(
+                        1 for m in role.members 
+                        if not m.bot and m.raw_status != 'offline'
+                    )
 
     def add_ping_record(self, guild_name: str, author_id: int):
         timestamp = datetime.now()
@@ -52,7 +39,6 @@ class StartGuildCog(commands.Cog):
             'author_id': author_id,
             'timestamp': timestamp
         })
-        # Keep only last 7 days, max 100 entries
         self.ping_history[guild_name] = [
             ping for ping in self.ping_history[guild_name] 
             if ping['timestamp'] > datetime.now() - timedelta(days=7)
@@ -97,10 +83,10 @@ class StartGuildCog(commands.Cog):
             "```diff\n+ SYSTÈME D'ALERTE GUILDE [v2.7.0]\n```\n"
             "**📋 Instructions :**\n"
             "1️⃣ Cliquez sur le bouton de votre guilde\n"
-            "2️⃣ Suivez les mises à jour dans #alerte-def\n"
+            "2️⃣ Suivez les mises à jour dans #║╟➢📯alertes-def \n"
             "3️⃣ Ajoutez des notes si nécessaire\n\n"
             f"👥 Membres connectés: {total_connectes}\n"
-            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
+            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
         )
 
         for guild_name, count in self.member_counts.items():
@@ -121,19 +107,16 @@ class StartGuildCog(commands.Cog):
                 inline=True
             )
 
-        if self.last_update:
-            update_time = self.last_update.strftime('%H:%M:%S')
-        else:
-            update_time = datetime.now().strftime('%H:%M:%S')
-
         embed.set_footer(
-            text=f"Dernière actualisation: {update_time}",
+            text=f"Dernière actualisation: {datetime.now().strftime('%H:%M:%S')}",
             icon_url="https://cdn.discordapp.com/embed/avatars/4.png"
         )
         
         return embed
 
     async def ensure_panel(self):
+        await self.update_member_counts()
+        
         guild = self.bot.get_guild(GUILD_ID)
         if not guild:
             return
@@ -151,17 +134,18 @@ class StartGuildCog(commands.Cog):
         view = GuildPingView(self.bot)
         embed = await self.create_panel_embed()
 
-        try:
-            if self.panel_message:
+        if self.panel_message:
+            try:
                 await self.panel_message.edit(embed=embed, view=view)
-            else:
-                self.panel_message = await channel.send(embed=embed, view=view)
-                await self.panel_message.pin(reason="Mise à jour du panneau")
-        except discord.NotFound:
-            self.panel_message = None
-            await self.ensure_panel()
+            except discord.NotFound:
+                self.panel_message = None
+                await self.ensure_panel()
+        else:
+            self.panel_message = await channel.send(embed=embed, view=view)
+            await self.panel_message.pin(reason="Mise à jour du panneau")
 
     async def handle_ping(self, guild_name):
+        """Gestion améliorée du cooldown"""
         now = datetime.now().timestamp()
         if guild_name in self.cooldowns:
             if now < self.cooldowns[guild_name]:
@@ -250,10 +234,7 @@ class StartGuildCog(commands.Cog):
                     add_reactions=False,
                     create_public_threads=False
                 )
-        
-        # Start background task to update member counts periodically
-        self.bot.loop.create_task(self.periodic_update())
-        
+                
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
@@ -261,13 +242,6 @@ class StartGuildCog(commands.Cog):
             )
         )
         print(f"✅ Système opérationnel • {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-
-    async def periodic_update(self):
-        """Task to update member counts every 30 seconds"""
-        while not self.bot.is_closed():
-            await self.update_member_counts()
-            await self.ensure_panel()
-            await asyncio.sleep(30)  # Update every 30 seconds
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StartGuildCog(bot))
