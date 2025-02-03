@@ -69,6 +69,14 @@ class AlertActionView(View):
         self.screens_def_button.callback = self.upload_screenshot
         self.add_item(self.screens_def_button)
 
+        # Adding the custom triangle emoji button for second defense
+        self.second_defense_button = Button(
+            style=discord.ButtonStyle.primary,
+            emoji="<:triangle_emoji:1223045245428568106>"  # Custom emoji with ID
+        )
+        self.second_defense_button.callback = self.call_second_defense
+        self.add_item(self.second_defense_button)
+
     async def add_note_callback(self, interaction: discord.Interaction):
         if interaction.channel_id != ALERTE_DEF_CHANNEL_ID:
             await interaction.response.send_message("Vous ne pouvez pas ajouter de note ici.", ephemeral=True)
@@ -118,6 +126,12 @@ class AlertActionView(View):
                 await interaction.followup.send("Format de fichier non supporté. Veuillez uploader un fichier jpg ou png.", ephemeral=True)
         except Exception as e:
             await interaction.followup.send(f"Une erreur est survenue: {e}", ephemeral=True)
+
+    async def call_second_defense(self, interaction: discord.Interaction):
+        embed = self.message.embeds[0]
+        embed.add_field(name="⚠️ Deuxième Défense", value="Une équipe défend déjà un percepteur, besoin de monde pour une deuxième défense.", inline=False)
+        await self.message.edit(embed=embed)
+        await interaction.response.send_message("Demande de deuxième défense envoyée.", ephemeral=True)
 
 
 class GuildPingView(View):
