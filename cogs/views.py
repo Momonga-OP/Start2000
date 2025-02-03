@@ -71,7 +71,7 @@ class AlertActionView(View):
 
         # Adding the custom triangle emoji button for second defense
         self.second_defense_button = Button(
-            style=discord.ButtonStyle.primary,
+            style=discord.ButtonStyle.primary,  # Purple/violet color
             emoji="<:triangle_emoji:1223045245428568106>"  # Custom emoji with ID
         )
         self.second_defense_button.callback = self.call_second_defense
@@ -128,10 +128,23 @@ class AlertActionView(View):
             await interaction.followup.send(f"Une erreur est survenue: {e}", ephemeral=True)
 
     async def call_second_defense(self, interaction: discord.Interaction):
+        # Get the role to tag
+        role = interaction.guild.get_role(1300093554064097401)
+        if not role:
+            await interaction.response.send_message("Le rôle pour la deuxième défense est introuvable.", ephemeral=True)
+            return
+
+        # Update the embed
         embed = self.message.embeds[0]
-        embed.add_field(name="⚠️ Deuxième Défense", value="Une équipe défend déjà un percepteur, besoin de monde pour une deuxième défense.", inline=False)
+        embed.add_field(
+            name="⚠️ Deuxième Défense",
+            value=f"Une équipe défend déjà un percepteur, besoin de monde pour une deuxième défense. {role.mention}",
+            inline=False
+        )
         await self.message.edit(embed=embed)
-        await interaction.response.send_message("Demande de deuxième défense envoyée.", ephemeral=True)
+
+        # Send a confirmation message
+        await interaction.response.send_message(f"Demande de deuxième défense envoyée. {role.mention}", ephemeral=True)
 
 
 class GuildPingView(View):
