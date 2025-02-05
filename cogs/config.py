@@ -6,7 +6,7 @@ ALERTE_DEF_CHANNEL_ID = 1300093554399645715  # Replace with your alert channel I
 # Guild emojis with IDs and corresponding role IDs
 GUILD_EMOJIS_ROLES = {
     "GTO": {"emoji": "<:GTO:1307418692992237668>", "role_id": 1300093554080612363},
-    "LMDF": {"emoji": "<:lmdf:1307418765142786179>", "role_id": 1300093554080612364},
+    "MERCENAIRES": {"emoji": "<:lmdf:1307418765142786179>", "role_id": 1300093554080612364},
     "Notorious": {"emoji": "<:notorious:1307418766266728500>", "role_id": 1300093554064097406},
     "Percophile": {"emoji": "<:percophile:1307418769764651228>", "role_id": 1300093554080612362},
     "Tilisquad": {"emoji": "<:tilisquad:1307418771882905600>", "role_id": 1300093554080612367},
