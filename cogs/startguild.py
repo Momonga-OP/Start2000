@@ -24,14 +24,32 @@ class StartGuildCog(commands.Cog):
     async def update_member_counts(self):
         """Mise à jour précise des membres connectés"""
         guild = self.bot.get_guild(GUILD_ID)
-        if guild:
-            await guild.chunk()  # Charge tous les membres
-            for role in guild.roles:
-                if role.name.startswith("DEF"):
-                    self.member_counts[role.name] = sum(
-                        1 for m in role.members 
-                        if not m.bot and m.raw_status != 'offline'
-                    )
+        if not guild:
+            return
+
+        # Ensure we have member cache
+        if not guild.chunked:
+            await guild.chunk()
+
+        # Reset counts
+        self.member_counts.clear()
+
+        # Check each member's status
+        for role in guild.roles:
+            if role.name.startswith("DEF"):
+                online_count = 0
+                for member in role.members:
+                    if member.bot:
+                        continue
+                    
+                    # Check if member has a presence
+                    if member.status != discord.Status.offline:
+                        online_count += 1
+                    # Fallback check if presence is not available
+                    elif hasattr(member, 'raw_status') and member.raw_status != 'offline':
+                        online_count += 1
+
+                self.member_counts[role.name] = online_count
 
     def add_ping_record(self, guild_name: str, author_id: int):
         timestamp = datetime.now()
@@ -86,7 +104,7 @@ class StartGuildCog(commands.Cog):
             "2️⃣ Suivez les mises à jour dans #║╟➢📯alertes-def \n"
             "3️⃣ Ajoutez des notes si nécessaire\n\n"
             f"👥 Membres connectés: {total_connectes}\n"
-            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
+            "```ansi\n[2;34m[!] Statut système: [0m[2;32mOPÉRATIONNEL[0m```"
         )
 
         for guild_name, count in self.member_counts.items():
@@ -242,6 +260,19 @@ class StartGuildCog(commands.Cog):
             )
         )
         print(f"✅ Système opérationnel • {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+
+    @commands.Cog.listener()
+    async def on_presence_update(self, before, after):
+        """Update member counts when a member's status changes"""
+        guild = self.bot.get_guild(GUILD_ID)
+        if not guild:
+            return
+
+        # Check if the member has any DEF roles
+        has_def_role = any(role.name.startswith("DEF") for role in after.roles)
+        if has_def_role:
+            await self.update_member_counts()
+            await self.ensure_panel()
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(StartGuildCog(bot))
