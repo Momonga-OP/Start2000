@@ -9,7 +9,7 @@ GUILD_EMOJIS_ROLES = {
     "MERCENAIRES": {"emoji": "<:lmdf:1307418765142786179>", "role_id": 1300093554080612364},
     "Notorious": {"emoji": "<:notorious:1307418766266728500>", "role_id": 1300093554064097406},
     "Percophile": {"emoji": "<:percophile:1307418769764651228>", "role_id": 1300093554080612362},
-    "Tilisquad": {"emoji": "<:tilisquad:1307418771882905600>", "role_id": 1300093554080612367},
+    "Nightmare": {"emoji": "<:Nightmare:1342131008987730064>", "role_id": 1300093554080612367},
     "Crescent": {"emoji": "<:Crescent:1328374098262495232>", "role_id": 1300093554064097404},
     "Deviance": {"emoji": "<:Deviance:1328387647386947664>", "role_id": 1300093554064097408},
     "Academie": {"emoji": "<:Academie:1333147586986774739>", "role_id": 1300093554080612365},
