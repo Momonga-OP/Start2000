@@ -40,10 +40,10 @@ ROLE_DATA: Dict[str, Dict[str, any]] = {
         "role_name": "Percophile",
         "color": discord.Color.orange()
     },
-    "Tilisquad": {
-        "emoji": "<:tilisquad:1307418771882905600>",
+    "Nightmare": {
+        "emoji": "<:Nightmare:1342131008987730064>",
         "role_id": 1300093554080612367,
-        "role_name": "Tilisquad",
+        "role_name": "Nightmare",
         "color": discord.Color.gold()
     },
     "Crescent": {
