@@ -58,12 +58,6 @@ ROLE_DATA: Dict[str, Dict[str, any]] = {
         "role_name": "Academie",
         "color": discord.Color.dark_red()
     },
-    "Deviance": {
-        "emoji": "<:Deviance:1328387647386947664>",
-        "role_id": 1300093554064097408,
-        "role_name": "Deviance",
-        "color": discord.Color.teal()
-    },
 }
 
 DEF_ROLE_ID: int = 1300093554064097401
